@@ -1,0 +1,11 @@
+docker run \
+    -d \
+    --restart unless-stopped \
+    --name my-iot-container \
+    -p 5050:5050 \
+    --device=/dev/ttyACM0:/dev/ttyACM0 \
+    --device=/dev/video0:/dev/video0 \
+    -v /home/Pi/Desmond/2_Executable_Files_3:/app/data \
+    -v /home/Pi/Desmond/2_Executable_Files_3:/app/static \
+    -e "IOT_BOT_TOKEN=7809206887:AAESQBi9-V2ltath7nTK3if-xoagPGvy5B0" \
+    my-iot-app

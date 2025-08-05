@@ -1,0 +1,146 @@
+Okay, that's a smart way to manage development and new features! You want to use your current working Docker setup for the _10 version as a template or starting point to develop an _11 version.
+
+Here's a checklist on how to approach this. This will involve duplicating your application code, creating a new Docker image (and potentially container name) for version _11, and managing data separately.
+
+This checklist assumes:
+
+Your current version _10 image is named my-iot-app (or my-iot-app:v10).
+Your current version _10 container is named my-iot-container.
+Your version _10 application code is in ~/Desmond/2_Executable_Files/.
+Your persistent data for version _10 is in /home/Pi/iot_app_data/.
+
+
+--------------------------------------------------------------------
+Checklist: Creating a New App Version (_11) from Existing Docker Setup (_10)
+--------------------------------------------------------------------
+
+**Section 1: Preparation & Duplicating the Codebase for Version _11**
+
+1.  **Ensure Version _10 is Stable (Optional but good practice):**
+    * If `my-iot-container` (for version _10) is running and you want to copy its data accurately, you might consider stopping it temporarily:
+        * Command: `docker stop my-iot-container`
+
+2.  **Navigate to the Parent Directory of Your Application Code:**
+    * Command: `cd ~/Desmond/`
+
+3.  **Duplicate Your Entire Application Code Directory:**
+    * This creates a separate workspace for version _11.
+    * Command: `cp -r 2_Executable_Files/ 2_Executable_Files_v11`
+    * (You now have `~/Desmond/2_Executable_Files/` for v10 and `~/Desmond/2_Executable_Files_v11/` for v11)
+
+4.  **Navigate into the New Version _11 Code Directory:**
+    * All subsequent file edits for version _11 will happen here.
+    * Command: `cd ~/Desmond/2_Executable_Files_v11/`
+
+5.  **Rename Core Application Files for Version _11 (Important for your setup):**
+    * Since your filenames include the version number, you'll need to rename them to reflect `_11`.
+    * Commands (examples, do this for all relevant `_10.py` files):
+        ```bash
+        mv iot_app_main_10.py iot_app_main_11.py
+        mv iot_env_config_10.py iot_env_config_11.py
+        mv iot_sensor_utils_10.py iot_sensor_utils_11.py
+        mv iot_arduino_manager_10.py iot_arduino_manager_11.py
+        mv iot_serial_manager_10.py iot_serial_manager_11.py
+        mv iot_email_and_periodic_10.py iot_email_and_periodic_11.py
+        mv iot_app_handlers_and_templates_10.py iot_app_handlers_and_templates_11.py
+        # etc. for any other versioned files
+        ```
+
+6.  **Update Import Statements Within Your New _v11 Python Files:**
+    * Open your new `_11.py` files (e.g., `iot_app_main_11.py`, `iot_sensor_utils_11.py`, etc.).
+    * Change any `import` statements that refer to your old `_10` modules to now refer to your new `_11` modules.
+    * Example in `iot_app_main_11.py`:
+        * Change `import iot_env_config_10 as env_config` to `import iot_env_config_11 as env_config`.
+        * Change `from iot_sensor_utils_10 import ...` to `from iot_sensor_utils_11 import ...`.
+        * (Do this for all internal imports).
+
+---
+
+**Section 2: Modifying Files and Building for Version _11**
+
+1.  **Edit `Dockerfile` for Version _11 (Still in `~/Desmond/2_Executable_Files_v11/`):**
+    * Open the `Dockerfile` with `nano Dockerfile`.
+    * Update the `CMD` instruction to point to your new main script:
+        * Change: `CMD ["python3", "iot_app_main_10.py"]`
+        * To: `CMD ["python3", "iot_app_main_11.py"]`
+    * Make any other changes if version _11 requires different system dependencies (e.g., changes to the `apt-get install` line).
+
+2.  **Edit `requirements.txt` for Version _11:**
+    * If version _11 has different Python package needs, update `requirements.txt` accordingly.
+
+3.  **Edit Configuration (`iot_env_config_11.py`) for Version _11:**
+    * Open `iot_env_config_11.py` with `nano iot_env_config_11.py`.
+    * **Crucially, for data isolation, change `DB_NAME` if you want a separate database for v11:**
+        * Example: `DB_NAME = '/app/data/sensor_data_v11.db'` (This uses the same `/app/data` internal container path, but a different filename).
+    * Update any other settings (API keys, thresholds, etc.) specific to version _11.
+
+4.  **Implement Your Version _11 Application Code Changes:**
+    * Make the actual functional changes and feature additions to your `_11.py` scripts, HTML templates in the `templates` folder, etc.
+
+Summary of Actions:
+
+Edit iot_email_and_periodic_11.py: Change from iot_sensor_utils_10 import collect_sensor_data to from iot_sensor_utils_11 import collect_sensor_data.
+Edit iot_sensor_utils_11.py (in capture_image): Change static_dir_path from '/app/static' to a local path (e.g., based on os.path.dirname(os.path.abspath(__file__)) and a subdirectory like 'static_v11'). Create this local subdirectory.
+Edit iot_app_main_11.py (in dashboard route): Change fig.savefig(f'/app/static/{chart_file}') to use the same local path as above (e.g., fig.savefig(f'static_v11/{chart_file}')).
+After making these changes, save the files and try running iot_app_main_11.py in Thonny again.
+
+Remember: When you are ready to build the Docker image for version _11, you will need to revert the paths for the database (in iot_env_config_11.py) and static files (in iot_sensor_utils_11.py and iot_app_main_11.py) back to the /app/data/... and /app/static/... versions that are designed for the Docker container's filesystem structure and volume mappings.
+
+
+
+5.  **Build the New Docker Image for Version _11:**
+    * Ensure you are in the `~/Desmond/2_Executable_Files_v11/` directory.
+    * Use a new tag to distinguish this image (e.g., `my-iot-app:v11` or `my-iot-app-v11`).
+    * Command: `docker build -t my-iot-app:v11 .`
+
+---
+
+**Section 3: Running and Managing the Version _11 Container**
+
+1.  **Create Host Directories for Version _11 Persistent Data:**
+    * To keep v11 data separate from v10, create new host directories.
+    * Commands (from your home directory `~` or adjust paths):
+        ```bash
+        mkdir -p /home/Pi/iot_app_data_v11/database
+        mkdir -p /home/Pi/iot_app_data_v11/static
+        ```
+
+2.  **(Optional) Copy Data from Version _10 to Start Version _11:**
+    * If you want version _11 to start with a copy of version _10's data:
+        ```bash
+        # Ensure v10 container is stopped for data consistency if you haven't already
+        # docker stop my-iot-container 
+        
+        cp -r /home/Pi/iot_app_data/database/* /home/Pi/iot_app_data_v11/database/
+        cp -r /home/Pi/iot_app_data/static/* /home/Pi/iot_app_data_v11/static/
+        ```
+    * If v11 needs a fresh database, skip this data copy step (but still create the empty directories above).
+
+3.  **Run the New Version _11 Container:**
+    * Use a **new container name** (`--name my-iot-container-v11`).
+    * Use **different host volume paths** (`-v /home/Pi/iot_app_data_v11/...`).
+    * If you want to run v10 and v11 simultaneously, use a **different host port mapping** for v11 (e.g., `-p 5051:5050` to map host port 5051 to container port 5050). If only running one at a time, you can reuse host port 5050.
+    * Command Example (for running v11, potentially alongside v10 on a different port):
+        ```bash
+        docker run \
+            -d \
+            --restart unless-stopped \
+            --name my-iot-container-v11 \
+            -p 5051:5050 \
+            --device=/dev/ttyACM0:/dev/ttyACM0 \
+            --device=/dev/video0:/dev/video0 \
+            -v /home/Pi/iot_app_data_v11/database:/app/data \
+            -v /home/Pi/iot_app_data_v11/static:/app/static \
+            -e "IOT_BOT_TOKEN=YOUR_V11_BOT_TOKEN_IF_DIFFERENT" \
+            my-iot-app:v11
+        ```
+
+4.  **Verify Version _11:**
+    * Check status: `docker ps` (look for `my-iot-container-v11`).
+    * Check logs: `docker logs my-iot-container-v11`.
+    * Test all functionalities of version _11 (web interface on the new port if applicable, Telegram bot, data saving to the new `iot_app_data_v11` directories).
+
+5.  **(Optional) Restart Your Version _10 Container if you stopped it:**
+    * Command: `docker start my-iot-container`
+
+This workflow allows you to develop and test a new version (_11) while keeping your existing version (_10) intact and its data separate.

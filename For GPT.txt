@@ -1,0 +1,29 @@
+-the fetch sensor and imu buttons are not working.
+-the web page is not populating the sensor or imu tables.
+-please remove the 'logarithm' approach, and work with raw data.
+
+
+
+
+-Temperature is not showing correct value, pressure is also wrong.
+
+Please Add:
+
+Custom time config for the top-of-hour logic
+
+Trend detection thresholds or alerts
+
+Dashboard redesign or auto-refresh
+
+Do NOT remove anything unless it is a correctoin....
+
+
+
+
+Great!
+
+-The website displays the graphs, but not tables of data - I think 20 readings will be appropriate.
+-The sensor data is not being sampled as often as the IMU?
+-The sampling on the hour (adjustable) was removed - please put it back.
+-we are missing some of the troubleshooting prints - put them back please.
+-The temperature and pressure values are way high - is this a software problem?

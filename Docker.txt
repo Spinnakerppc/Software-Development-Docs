@@ -1,0 +1,85 @@
+----------------------------------------------------
+Checklist for Editing Your Dockerized Application
+----------------------------------------------------
+
+Okay, here's a checklist in a text format that you can copy. It outlines the typical workflow for editing an application that you are running inside a Docker container.
+
+This checklist assumes:
+
+Your Docker image is named my-iot-app.
+Your running container is named my-iot-container.
+Your application code and Dockerfile are in a directory like ~/Desmond/2_Executable_Files/ on your Raspberry Pi.
+You are making changes to the Python scripts, HTML templates, or other files that are part of your application and copied into the image during the docker build process
+
+
+**Section 1: Steps and Commands WHILE Editing Your Application Code**
+
+1.  **Identify the Need for a Change:**
+    * Determine what part of your application (e.g., a Python script like `iot_app_main_10.py`, an HTML template, `iot_env_config_10.py`, etc.) needs to be edited.
+
+2.  **Navigate to Your Application Code Directory (on the Raspberry Pi Host):**
+    * Open a terminal on your Raspberry Pi.
+    * Command: `cd ~/Desmond/2_Executable_Files/` (or your specific application directory)
+
+3.  **Edit Your Application Files:**
+    * Use a text editor (like `nano`, `vim`, or a graphical editor if you're using the Pi's desktop) to make the necessary changes to your Python files, HTML templates, `requirements.txt`, or any other source files.
+    * Example (editing the main app file): `nano iot_app_main_10.py`
+    * Example (editing environment configuration): `nano iot_env_config_10.py`
+    * Example (editing the Dockerfile itself if system dependencies change): `nano Dockerfile`
+
+4.  **Save Your Changes:**
+    * Ensure all edited files are saved.
+
+-------------------------------------------------------------------
+Section 2: Steps and Commands AFTER Edits Are Completed (To Deploy)
+-------------------------------------------------------------------
+
+1.  **Stop the Currently Running Container:**
+    * If your container `my-iot-container` is currently running, you need to stop it before you can remove it and replace it with an updated version.
+    * Command: `docker stop my-iot-container`
+
+2.  **Remove the Old Container:**
+    * Once stopped, remove the container. This does NOT delete your image or your data volumes.
+    * Command: `docker rm my-iot-container`
+    * (If the above command says "No such container", it's okay, it just means it wasn't running or was already removed).
+
+3.  **Rebuild Your Docker Image:**
+    * This step takes your saved code changes and packages them into a new version of your `my-iot-app` image.
+    * Make sure you are still in your application directory (`~/Desmond/2_Executable_Files/`).
+    * Command: `docker build -t my-iot-app .`
+    * Wait for the build to complete. Look for the "Successfully built..." message.
+
+4.  **Run a New Container with the Updated Image:**
+    * Use the same `docker run` command you used previously to start your application. This will create a new container based on the freshly rebuilt image.
+    * Command:
+        ```
+        docker run \
+            -d \
+            --restart unless-stopped \
+            --name my-iot-container \
+            -p 5050:5050 \
+            --device=/dev/ttyACM0:/dev/ttyACM0 \
+            --device=/dev/video0:/dev/video0 \
+            -v /home/Pi/iot_app_data/database:/app/data \
+            -v /home/Pi/iot_app_data/static:/app/static \
+            -e "IOT_BOT_TOKEN=7809206887:AAESQBi9-V2ltath7nTK3if-xoagPGvy5B0" \
+            my-iot-app
+        ```
+
+5.  **Verify the New Container is Running and Working:**
+    * Check if the container is running:
+        * Command: `docker ps`
+        * (Look for `my-iot-container` with an "Up" status).
+    * Check the logs for any startup errors or to see your application's output:
+        * Command: `docker logs my-iot-container`
+        * For live logs: `docker logs -f my-iot-container`
+    * Test your application's functionality (e.g., access the web interface, use the Telegram bot) to ensure your changes are working as expected.
+
+----------------------------------------------------
+Optional: Cleaning Up Old Images (Advanced/Occasional)
+----------------------------------------------------
+* Over time, you might accumulate old, unused Docker images. You can list all images with `docker images`.
+* To remove dangling images (those not tagged or used by any container): `docker image prune`
+* To remove specific unused images: `docker rmi <IMAGE_ID_OR_NAME>` (Be careful not to remove images that are still in use or that you might want to roll back to).
+
+----------------------------------------------------

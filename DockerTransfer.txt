@@ -1,0 +1,134 @@
+--------------------------------------------------------------------
+Checklist: Transferring Docker Container/Application to Another RPi
+--------------------------------------------------------------------
+
+**Section 1: On the SOURCE Raspberry Pi (Current Pi with Working Docker Setup)**
+
+1.  **Stop the Running Container (Optional, but Recommended for Data Consistency):**
+    * Ensures data is not changing while you copy it.
+    * Command: `docker stop my-iot-container`
+
+2.  **Save Your Docker Image to a File:**
+    * This packages your `my-iot-app` image into a portable TAR archive.
+    * Command: `docker save my-iot-app -o my-iot-app-image.tar`
+    * (This will create a file named `my-iot-app-image.tar` in your current directory.)
+
+3.  **Archive Your Persistent Application Data:**
+    * This step is crucial for transferring your database and any saved images/charts.
+    * The data is stored in the host directories you mapped as volumes. Based on our previous setup, these are `/home/Pi/iot_app_data/database` and `/home/Pi/iot_app_data/static`.
+    * Command (run from `/home/Pi/` or adjust paths accordingly):
+        ```bash
+        tar -cvzf iot_app_data.tar.gz iot_app_data/
+        ```
+        (This creates a compressed archive named `iot_app_data.tar.gz` containing the `iot_app_data` directory and its contents.)
+
+4.  **Note Down Your Exact `docker run` Command:**
+    * You will need the *exact* command with all its flags (`-p`, `--device`, `-v`, `-e`, etc.) to recreate the container correctly on the new Pi. Copy it from your notes or terminal history. The command we've been using is:
+        ```
+        docker run \
+            -d \
+            --restart unless-stopped \
+            --name my-iot-container \
+            -p 5050:5050 \
+            --device=/dev/ttyACM0:/dev/ttyACM0 \
+            --device=/dev/video0:/dev/video0 \
+            -v /home/Pi/iot_app_data/database:/app/data \
+            -v /home/Pi/iot_app_data/static:/app/static \
+            -e "IOT_BOT_TOKEN=7809206887:AAESQBi9-V2ltath7nTK3if-xoagPGvy5B0" \
+            my-iot-app
+        ```
+
+5.  **Transfer Files to the Target RPi:**
+    * Transfer the `my-iot-app-image.tar` file and the `iot_app_data.tar.gz` file to the new Raspberry Pi.
+    * Methods: `scp` (secure copy over network), USB drive, network share, etc.
+
+---
+
+**Section 2: On the TARGET Raspberry Pi (New Pi)**
+
+1.  **Install Docker Engine:**
+    * If Docker is not already installed on the new Pi, follow the same installation steps you used for the first Pi:
+        ```bash
+        curl -fsSL [https://get.docker.com](https://get.docker.com) -o get-docker.sh
+        sudo sh get-docker.sh
+        ```
+
+2.  **Add Your User to the `docker` Group:**
+    * This allows you to run Docker commands without `sudo`.
+    * Command: `sudo usermod -aG docker ${USER}`
+    * **Important:** Log out and log back in, or reboot the target RPi for this change to take effect (`sudo reboot`).
+
+3.  **Verify Docker Installation (Optional but Recommended):**
+    * Command: `docker --version`
+    * Command: `docker run hello-world` (should run without `sudo` if group change is active).
+
+4.  **Copy Transferred Files:**
+    * Ensure `my-iot-app-image.tar` and `iot_app_data.tar.gz` are on the target Pi (e.g., in the `/home/Pi/` directory).
+
+5.  **Load the Docker Image:**
+    * This imports the image from the TAR file into Docker on the new Pi.
+    * Navigate to the directory where you placed `my-iot-app-image.tar`.
+    * Command: `docker load -i my-iot-app-image.tar`
+    * Verify with `docker images` (you should see `my-iot-app` listed).
+
+6.  **Restore Persistent Application Data:**
+    * Create the same directory structure on the target Pi that you used for volumes on the source Pi. This is crucial for the `docker run` command to work without modification.
+    * Commands:
+        ```bash
+        mkdir -p /home/Pi/iot_app_data/database
+        mkdir -p /home/Pi/iot_app_data/static
+        ```
+    * Navigate to `/home/Pi/` (or where you want `iot_app_data` to be, ensuring paths match your intended `docker run -v` flags).
+    * Extract the data archive. If `iot_app_data.tar.gz` is in `/home/Pi/` and it contains the `iot_app_data` folder:
+        ```bash
+        # If in /home/Pi/ and iot_app_data.tar.gz contains the 'iot_app_data' folder:
+        tar -xvzf iot_app_data.tar.gz
+        ```
+        (This should recreate `/home/Pi/iot_app_data/database` and `/home/Pi/iot_app_data/static` with their contents).
+    * Verify the files are restored correctly.
+
+7.  **Ensure Hardware is Connected and Identified:**
+    * Connect your Arduino and Camera to the new Raspberry Pi.
+    * **Important:** Check their device names. They are *usually* `/dev/ttyACM0` and `/dev/video0` but can change if other devices are present or if they enumerate differently.
+    * For Arduino: `ls /dev/ttyACM*` or `ls /dev/ttyUSB*`
+    * For Camera: `ls /dev/video*`
+    * If these names are different on the new Pi, you'll need to adjust the `--device` flags in your `docker run` command accordingly.
+
+8.  **Run the Docker Container:**
+    * Use the exact `docker run` command you noted down from the source Pi (or the version modified in step 7 if device paths changed).
+    * Command:
+        ```
+        docker run \
+            -d \
+            --restart unless-stopped \
+            --name my-iot-container \
+            -p 5050:5050 \
+            --device=/dev/ttyACM0:/dev/ttyACM0 \
+            --device=/dev/video0:/dev/video0 \
+            -v /home/Pi/iot_app_data/database:/app/data \
+            -v /home/Pi/iot_app_data/static:/app/static \
+            -e "IOT_BOT_TOKEN=7809206887:AAESQBi9-V2ltath7nTK3if-xoagPGvy5B0" \
+            my-iot-app
+        ```
+
+9.  **Verify Operation:**
+    * Check if the container is running:
+        * Command: `docker ps`
+    * Check the logs for any errors:
+        * Command: `docker logs my-iot-container`
+    * Thoroughly test all functionalities:
+        * Web interface at `http://<NEW_PI_IP_Address>:5050`.
+        * Telegram bot interactions.
+        * Data saving (check new entries in database or new images in `/home/Pi/iot_app_data/static` on the new Pi).
+
+---
+**Important Considerations:**
+
+* **Host Paths for Volumes:** If you cannot use the exact same host paths for volumes on the new Pi (e.g., you want to use `/opt/iot_app_data` instead of `/home/Pi/iot_app_data`), you MUST update the host-side part of the `-v` flags in your `docker run` command accordingly.
+* **Environment Variables:** Ensure all necessary environment variables (like `IOT_BOT_TOKEN`) are included in the `docker run` command on the new Pi.
+* **Network:** The new Raspberry Pi will have a different IP address. Update any DNS records or client configurations that might have pointed directly to the old Pi's IP address (though if you're using Cloudflare Tunnel and accessing it via a domain name, Cloudflare Tunnel on the new Pi would handle this once set up there).
+
+---
+Alternative for Image Transfer (More Advanced):
+* Instead of `docker save` and `docker load`, you could push your image to a Docker registry (like Docker Hub - public or private, or a self-hosted registry) from the source Pi, and then `docker pull` it on the target Pi. This is often preferred for more streamlined or automated workflows but requires registry setup.
+---

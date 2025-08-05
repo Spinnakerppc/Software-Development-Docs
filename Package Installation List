@@ -1,0 +1,122 @@
+cd Desmond/2_Executable_Files_4
+
+Github Token
+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
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHY31a/Pb0bHfKaHVUDTao32br2YKUKmSmdmGgXb5af5 iot.harmonsmith@gmail.com
+
+
+sudo ./LCD35-show
+sudo ./LCD-hdmi
+
+sudo ./geekpi-3.5-12.sh
+cd rpi-display-overlay
+sudo ./geekpi-hdmi-12.sh
+
+docker compose build --no-cache
+
+docker run --rm -it -p 5050:5050 --device=/dev/ttyACM0:/dev/ttyACM0 --device=/dev/video0:/dev/video0 -v "$(pwd)":/app iot-app
+
+
+docker run --rm -it -p 5050:5050 --device=/dev/ttyACM0:/dev/ttyACM0 -v "$(pwd)":/app iot-app
+
+
+Portainer
+admin
+Spin73777377
+
+
+
+smb://seawindcloud/computerimages on seawindcloud/2_Executable_Files
+
+sudo systemctl stop iot_dashboard.service
+sudo systemctl status iot_dashboard.service
+sudo systemctl start iot_dashboard.service
+sudo systemctl status iot_dashboard.service
+
+
+sudo nano /etc/systemd/system/my-iot-app.service
+sudo systemctl daemon-reload
+sudo systemctl enable my-iot-app.service
+sudo systemctl start my-iot-app.service
+sudo systemctl status my-iot-app.service
+# Press 'q' to exit the status view
+
+# To see all logs for your application (use your SyslogIdentifier):
+journalctl -u my-iot-app.service -f
+
+
+
+source Desmond/bin/activate
+
+
+deactivate
+
+ps aux | grep MyApp.py
+sudo kill -9 <PID>
+sudo crontab -e
+
+sudo systemctl stop MyApp.service
+pkill -f MyApp.py
+sudo lsof -i :5000
+sudo netstat -tulpn | grep :5000
+sudo systemctl restart networking
+sudo systemctl restart NetworkManager
+
+sudo nano /etc/systemd/system/myapp.service
+sudo systemctl daemon-reload
+sudo systemctl enable myapp.service
+sudo systemctl start myapp.service
+sudo systemctl status myapp.service
+sudo systemctl stop my-iot-app.service
+
+
+smb://seawindcloud.local/ComputerImages
+
+//192.168.175.175/computerimages /home/Pi/Desmond/test cifs username=tv,password=Spin7377,iocharset=utf8,uid=pi,gid=pi,nounix,noserverino 0 0
+
+sudo mount -t cifs //192.168.175.175/computerimages /mnt/sharedfolder -o username=tv,password=Spin7377,vers=3.0
+
+# Mount network share
+//192.168.175.175/computerimages  /mnt/sharedfolder  cifs  credentials=/home/pi/.smbcredentials,vers=3.0,iocharset=utf8,uid=pi,gid=pi  0  0
+
+chmod 600 /home/Pi/Desmond/bin/.smbcredentials
+
+
+sudo apt install python3-numpy
+pip install scikit-learn
+python3 -m pip install --upgrade pip
+wget -qO- https://raw.githubusercontent.com/Botspot/pi-apps/master/install | bash
+sudo apt-get install python-pip
+sudo pip install telepot
+sudo apt install python3-flask
+
+pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+pip install python-dotenv
+
+git clone https://github.com/salmanfarisvp/TelegramBot.git 
+
+pip install python-telegram-bot==12.0.0b1 --upgrade 
+pip install python-telegram-bot --upgrade
+python -m pip install python-telegram-bot
+
+sudo apt install python3-opencv -y
+
+sudo apt update
+sudo apt install snapd
+
+sudo snap install snapd
+Install Telegram
+To install Telegram, simply use the following command:
+
+sudo snap install telegram-desktop
+
+sudo apt install -y libreadline-dev libconfig-dev libssl-dev 
+sudo apt install -y lua5.2 liblua5.2-dev
+sudo apt install -y libevent-dev libjansson-dev libpython-dev libssl1.0-dev make git
+
+cd ~
+git clone --recursive https://github.com/kenorb-contrib/tg.git
+
+
